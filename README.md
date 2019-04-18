@@ -56,7 +56,7 @@ I haven't tried to make Porechop run on Windows, but it should be possible. If y
 Running the `setup.py` script will compile the C++ components of Porechop and install a `porechop` executable:
 
 ```bash
-git clone https://github.com/rrwick/Porechop.git
+git clone https://github.com/RADnovogene/Porechop.git
 cd Porechop
 python3 setup.py install
 porechop -h
@@ -68,7 +68,7 @@ Notes:
     * If you get a strange "can't combine user with prefix" error, read [this](http://stackoverflow.com/questions/4495120).
 * Install to a specific location: `python3 setup.py install --prefix=$HOME/.local`
 * Install with pip (local copy): `pip3 install path/to/Porechop`
-* Install with pip (from GitHub): `pip3 install git+https://github.com/rrwick/Porechop.git`
+* Install with pip (from GitHub): `pip3 install git+https://github.com/RADnovogene/Porechop.git`
 * If you'd like to specify which compiler to use, set the `CXX` variable: `export CXX=g++-6; python3 setup.py install`
 * Porechop includes `ez_setup.py` for users who don't have [setuptools](https://pypi.python.org/pypi/setuptools) installed, though that script is [deprecated](https://github.com/pypa/setuptools/issues/581). So if you run into any installation problems, make sure setuptools is installed on your computer: `pip3 install setuptools`
 
@@ -78,7 +78,7 @@ Notes:
 By simply running `make` in Porechop's directory, you can compile the C++ components but not install an executable. The program can then be executed by directly calling the `porechop-runner.py` script.
 
 ```bash
-git clone https://github.com/rrwick/Porechop.git
+git clone https://github.com/RADnovogene/Porechop.git
 cd Porechop
 make
 ./porechop-runner.py -h
@@ -240,6 +240,7 @@ usage: porechop -i INPUT [-o OUTPUT] [--format {auto,fasta,fastq,fasta.gz,fastq.
                 [-t THREADS] [-b BARCODE_DIR] [--barcode_threshold BARCODE_THRESHOLD]
                 [--barcode_diff BARCODE_DIFF] [--require_two_barcodes] [--untrimmed]
                 [--discard_unassigned] [--adapter_threshold ADAPTER_THRESHOLD]
+                [--adapter_names ADAPTER_NAMES ADAPTER_NAMES ADAPTER_NAMES]
                 [--check_reads CHECK_READS] [--scoring_scheme SCORING_SCHEME] [--end_size END_SIZE]
                 [--min_trim_size MIN_TRIM_SIZE] [--extra_end_trim EXTRA_END_TRIM]
                 [--end_threshold END_THRESHOLD] [--no_split] [--discard_middle]
@@ -297,7 +298,9 @@ Adapter search settings:
   --scoring_scheme SCORING_SCHEME
                                  Comma-delimited string of alignment scores: match, mismatch, gap
                                  open, gap extend (default: 3,-6,-5,-2)
-
+  --adapter_names ADAPTER_NAMES  Specify multi adapters from adapter.py to trim (if not set, align
+                                 reads to all known adapter sets)
+  
 End adapter settings:
   Control the trimming of adapters from read ends
 
