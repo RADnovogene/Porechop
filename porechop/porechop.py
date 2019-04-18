@@ -24,7 +24,7 @@ import re
 from multiprocessing.dummy import Pool as ThreadPool
 from collections import defaultdict
 from .misc import load_fasta_or_fastq, print_table, red, bold_underline, MyHelpFormatter, int_to_str
-from .adapters import ADAPTERS, make_full_native_barcode_adapter,\
+from .adapters import ADAPTERS, make_full_native_barcode_adapter, \
     make_old_full_rapid_barcode_adapter, make_new_full_rapid_barcode_adapter
 from .nanopore_read import NanoporeRead
 from .version import __version__
@@ -35,9 +35,12 @@ def main():
     reads, check_reads, read_type = load_reads(args.input, args.verbosity, args.print_dest,
                                                args.check_reads)
 
-    matching_sets = find_matching_adapter_sets(check_reads, args.verbosity, args.end_size,
-                                               args.scoring_scheme_vals, args.print_dest,
-                                               args.adapter_threshold, args.threads)
+    if args.adapter_names:
+        matching_sets = set_adapter(args.adapter_names)
+    else:
+        matching_sets = find_matching_adapter_sets(check_reads, args.verbosity, args.end_size,
+                                                   args.scoring_scheme_vals, args.print_dest,
+                                                   args.adapter_threshold, args.threads)
     matching_sets = fix_up_1d2_sets(matching_sets)
 
     if args.barcode_dir:
@@ -45,8 +48,11 @@ def main():
                                                            args.print_dest)
     else:
         forward_or_reverse_barcodes = None
+    if args.adapter_names:
+        pass
+    else:
+        display_adapter_set_results(matching_sets, args.verbosity, args.print_dest)
 
-    display_adapter_set_results(matching_sets, args.verbosity, args.print_dest)
     matching_sets = add_full_barcode_adapter_sets(matching_sets)
 
     if args.verbosity > 0:
@@ -145,6 +151,8 @@ def get_arguments():
     adapter_search_group.add_argument('--scoring_scheme', type=str, default='3,-6,-5,-2',
                                       help='Comma-delimited string of alignment scores: match, '
                                            'mismatch, gap open, gap extend')
+    adapter_search_group.add_argument('--adapter_names', type=str, action="store", nargs='*', default='',
+                                      help='Set adapters')
 
     end_trim_group = parser.add_argument_group('End adapter settings',
                                                'Control the trimming of adapters from read ends')
@@ -222,7 +230,6 @@ def get_arguments():
 
 
 def load_reads(input_file_or_directory, verbosity, print_dest, check_read_count):
-
     # If the input is a file, just load reads from that file. The check reads will just be the
     # first reads from that file.
     if os.path.isfile(input_file_or_directory):
@@ -302,13 +309,14 @@ def find_matching_adapter_sets(check_reads, verbosity, end_size, scoring_scheme_
             for adapter_set in search_adapters:
                 read.align_adapter_set(adapter_set, end_size, scoring_scheme_vals)
             if verbosity > 0:
-                output_progress_line(read_num+1, read_count, print_dest)
+                output_progress_line(read_num + 1, read_count, print_dest)
 
     # If multi-threaded, use a thread pool.
     else:
         def align_adapter_set_one_arg(all_args):
             r, a, b, c = all_args
             r.align_adapter_set(a, b, c)
+
         with ThreadPool(threads) as pool:
             arg_list = []
             for read in check_reads:
@@ -471,7 +479,7 @@ def find_adapters_at_read_ends(reads, matching_sets, verbosity, end_size, extra_
             if check_barcodes:
                 read.determine_barcode(barcode_threshold, barcode_diff, require_two_barcodes)
             if verbosity == 1:
-                output_progress_line(read_num+1, read_count, print_dest)
+                output_progress_line(read_num + 1, read_count, print_dest)
             elif verbosity == 2:
                 print(read.formatted_start_and_end_seq(end_size, extra_trim_size, check_barcodes),
                       file=print_dest)
@@ -493,6 +501,7 @@ def find_adapters_at_read_ends(reads, matching_sets, verbosity, end_size, extra_
                 return r.full_start_end_output(b, c, g)
             else:
                 return ''
+
         with ThreadPool(threads) as pool:
             arg_list = []
             for read in reads:
@@ -566,7 +575,7 @@ def find_adapters_in_read_middles(reads, matching_sets, verbosity, middle_thresh
                                       extra_trim_bad_side, scoring_scheme_vals,
                                       start_sequence_names, end_sequence_names)
             if verbosity == 1:
-                output_progress_line(read_num+1, read_count, print_dest)
+                output_progress_line(read_num + 1, read_count, print_dest)
             if read.middle_adapter_positions and verbosity > 1:
                 print(read.middle_adapter_results(verbosity), file=print_dest, flush=True)
 
@@ -576,6 +585,7 @@ def find_adapters_in_read_middles(reads, matching_sets, verbosity, middle_thresh
             r, a, b, c, d, e, f, g, v = all_args
             r.find_middle_adapters(a, b, c, d, e, f, g)
             return r.middle_adapter_results(v)
+
         with ThreadPool(threads) as pool:
             arg_list = []
             for read in reads:
@@ -746,3 +756,8 @@ def output_progress_line(completed, total, print_dest, end_newline=False, step=1
 
     end_char = '\n' if end_newline else ''
     print('\r' + progress_str, end=end_char, flush=True, file=print_dest)
+
+
+def set_adapter(adapter_names):
+    adapter_names = set([i.lower() for i in adapter_names])
+    return [j for i in adapter_names for j in ADAPTERS if i.lower() in j.name.lower()]
