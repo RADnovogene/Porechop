@@ -78,6 +78,9 @@ ADAPTERS = [Adapter('SQK-NSK007',
                     start_sequence=('SQK-NSK007_Y_Top', 'AATGTACTTCGTTCAGTTACGTATTGCT'),
                     end_sequence=('SQK-NSK007_Y_Bottom', 'GCAATACGTAACTGAACGAAGT')),
 
+            Adapter('SQK-LSK109',
+                    start_sequence=('SQK-LSK109_Y_Top', 'GGCGTCTGCTTGGGTGTTTAACCTTTTTTTTTTAATGTACTTCGTTCAGTTACGTATTGCT'),
+                    end_sequence=('SQK-LSK109_Y_Bottom', 'GCAATACGTAACTGAACGAAGT')),
 
             Adapter('Rapid',
                     start_sequence=('Rapid_adapter',
